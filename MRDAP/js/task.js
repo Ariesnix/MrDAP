@@ -94,11 +94,11 @@ Task.bulidRow = function(data,tr){
 	
 	td = $("<td></td>");
 	td.appendTo(tr);
-	var html = "<input type = 'button' value = '查看' onclick = 'Task.showDetail(\"" + data.id + "\",\"open\")'/>";
+	var html = "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '查看' onclick = 'Task.showDetail(\"" + data.id + "\",\"open\")'/>";
 	if(data.taskstatus === "RUNNING"){
-		html += "<input type = 'button' value = '中止' onclick = 'Task.stop(\"" + data.id + "\")'/>";
+		html += "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '中止' onclick = 'Task.stop(\"" + data.id + "\")'/>";
 	}else{
-		html += "<input type = 'button' value = '删除' onclick = 'Task.remove(\"" + data.id + "\")'/>";
+		html += "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '删除' onclick = 'Task.remove(\"" + data.id + "\")'/>";
 	}
 	td.html(html);
 };
@@ -170,15 +170,18 @@ Task.showDetail = function(ts_id,status){
 			td.appendTo(tr);
 			var html = "";
 			if(tsdata.taskstatus === "RUNNING"){
-				html = "<input type = 'button' value = '中止' onclick = 'Task.stop(\"" + tsdata.id + "\")'/>";
+				html = "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '中止' onclick = 'Task.stop(\"" + tsdata.id + "\")'/>";
 			}else{
-				html = "<input type = 'button' value = '删除' onclick = 'Task.remove(\"" + tsdata.id + "\")'/>";
-			}
-			/*****if task done, download file*****/
-			if(tsdata.taskstatus === "SUCCEEDED"){
-				html += "<a target = '_self' href = '" + URL.download() + "?id=" + tsdata.id + "'><input type = 'button' value = '下载'/></a>";
+				html = "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '删除' onclick = 'Task.remove(\"" + tsdata.id + "\")'/>";
 			}
 			td.html(html);
+			/*****if task done, download file*****/
+			if(tsdata.taskstatus === "SUCCEEDED"){
+				var a = $("<a target = '_self' href = '" + URL.download() + "?id=" + tsdata.id + "'></a>");
+				a.appendTo(td);
+				var input = $("<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '下载'/>");
+				input.appendTo(a);
+			}
 			
 			$("#tstable-1").DataTable({
 				searching: false,
@@ -376,22 +379,24 @@ Task.run = function(){
 	
 	/*****get selected datasets*****/
 	var datasets = $.parseJSON("[]");
-	$.each($("#dstree-float").jstree("get_top_checked",true),function(index,value){
-//		console.log(this.id);
-		var path = Task.getPath(this.id);
-		datasets[index] = "";
-		for(var i = path.length - 1; i >= 0; i--){
-			datasets[index] += path[i];
-			if(i != 0){
-				datasets[index] += "/";
-			}
-		}
-	});
-//	console.log(datasets);
-	if(datasets.length === 0){
+	var top_checked = $("#dstree-float").jstree("get_top_checked",true);
+	if(top_checked.length === 0){
 		alert("选择一个数据集!");
 		return;
 	}
+	
+	/*****close checkbox window*****/
+	Common.closeWindow();
+	$.each(top_checked,function(index,value){
+//		console.log(this.id);
+		$("#dstree-float").jstree("open_all",this.id);
+	});
+	$.each($("#dstree-float").jstree("get_bottom_checked",true),function(index,value){
+//		console.log(this.id);
+		datasets[index] = $("#" + this.id).children("a").children("span").attr("id");
+	});
+	console.log(datasets);
+	return;
 	
 	/*****get parameter text*****/
 	var tr = $("#dtfragment-2").children("table").children("tbody").children("tr").eq(2);
@@ -412,24 +417,11 @@ Task.run = function(){
 				alert("新建任务失败!");
 			}
 			
-			/*****close & reload checkbox window*****/
-			Common.closeWindow();
+			/*****reload checkbox window*****/
 			Task.loadDslist();
 		}).fail(function(){
 			alert("Oops, we got an error...");
 		});
-};
-
-/*****get dataset file path*****/
-
-Task.getPath = function(node_id){
-	var node_text = [];
-	node_text[0] = $("#" + node_id).children("a").text();
-	var parent = $("#" + node_id).parents("li");
-	for(var i = 0; i < parent.length; i++){
-		node_text[i + 1] = parent.eq(i).children("a").text();
-	}
-	return node_text;
 };
 
 /*****refresh task list*****/
@@ -463,8 +455,8 @@ Task.refreshStatus = function(index){
 			
 			/*****if status changes, change button; if tab shows this task's detail info, refresh it*****/
 			if(new_text != "RUNNING"){
-				var new_html = "<input type = 'button' value = '查看' onclick = 'Task.showDetail(\"" + id + "\",\"open\")'/>";
-				new_html += "<input type = 'button' value = '删除' onclick = 'Task.remove(\"" + id + "\")'/>";
+				var new_html = "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '查看' onclick = 'Task.showDetail(\"" + id + "\",\"open\")'/>";
+				new_html += "<input type = 'button' style = 'font-family: Times New Roman,楷体;' value = '删除' onclick = 'Task.remove(\"" + id + "\")'/>";
 				var td = tr.children("td").eq(3);
 				td.html(new_html);
 				
