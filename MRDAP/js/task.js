@@ -86,7 +86,7 @@ Task.bulidRow = function(data,tr){
 	
 	td = $("<td></td>");
 	td.appendTo(tr);
-	td.text(data.tasktype);
+	td.text(data.taskTypeName);
 	
 	td = $("<td></td>");
 	td.appendTo(tr);
@@ -160,7 +160,7 @@ Task.showDetail = function(ts_id,status){
 			
 			td = $("<td></td>");
 			td.appendTo(tr);
-			td.text(tsdata.tasktype);
+			td.text(tsdata.taskTypeName);
 			
 			td = $("<td></td>");
 			td.appendTo(tr);
@@ -215,7 +215,17 @@ Task.showDetail = function(ts_id,status){
 			tr.appendTo(tbody);
 			td = $("<td></td>");
 			td.appendTo(tr);
-			td.text(tsdata.jdatasets);
+			var dataset = tsdata.jdatasets;
+			if(Common.isArray(dataset)){
+				html = "<div style = 'text-align: left; padding-left: 20px'>" + dataset[0];
+				for(var i = 1; i < dataset.length; i++){
+					html += "<br/>" + dataset[i];
+				}
+				html += "</div>";
+			}else{
+				html = dataset;
+			}
+			td.html(html);
 			
 			$("#tstable-2").DataTable({
 				searching: false,
@@ -288,15 +298,18 @@ Task.create = function(){
 	tr.appendTo(selector);
 	var td = $("<td></td>");
 	td.appendTo(tr);
-	td.html("选择任务类别:");
+	td.html("选择任务类别");
 	$.getJSON(URL.getTaskType() + "?jsoncallback=?")
 		.done(function(data){
-//			console.log(data);
+			var taskTypeInfo = data.jTaskType;
+//			console.log(taskTypeInfo);
+			
 			td = $("<td></td>");
 			td.appendTo(tr);
 			var table = $("<table></table>");
 			table.appendTo(td);
-			for(var i = 0; i < data.length; i++){
+			/*****warning: task type info's length must >= 2*****/
+			for(var i = 0; i < taskTypeInfo.length; i++){
 				if(i % 3 === 0){
 					tr = $("<tr></tr>");
 					tr.appendTo(table);
@@ -307,29 +320,77 @@ Task.create = function(){
 				radio.appendTo(td);
 				radio.attr("type","radio");
 				radio.attr("name","dtfragment-2-task-type");
-				radio.attr("value",data[i]);
+				radio.attr("value",taskTypeInfo[i].id);
+				radio.attr("onclick","Task.showTypeInfo('" + taskTypeInfo[i].id + "')");
 				
 				span = $("<span></span>");
 				span.appendTo(td);
-				span.html(data[i]);
+				span.html(taskTypeInfo[i].name);
 			}
+			$("input[name='dtfragment-2-task-type']").eq(0).prop("checked",true);
 			
-			/*****selector table: second row*****/
-			tr = $("<tr></tr>");
-			tr.appendTo(selector);
-			td = $("<td></td>");
-			td.appendTo(tr);
-			td.html("选择数据集:");
-			td = $("<td></td>");
-			td.appendTo(tr);
-			td.html("<input type = 'button' value = '打开数据集列表' onclick = 'Common.openWindow()'/>");
+			/*****selector table: second row, hidden row*****/
+			for(var i = 0; i < taskTypeInfo.length; i++){
+				tr = $("<tr></tr>");
+				tr.appendTo(selector);
+				tr.attr("id","dtfragment-2-task-type-des-" + taskTypeInfo[i].id);
+				tr.css({
+					"display": "none"
+				});
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.html("任务介绍");
+				td = $("<td></td>");
+				td.appendTo(tr);
+				
+				/*****use a table to show task type info*****/
+				table = $("<table></table>");
+				table.appendTo(td);
+				tr = $("<tr></tr>");
+				tr.appendTo(table);
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text("任务描述:");
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text(taskTypeInfo[i].description);
+				tr = $("<tr></tr>");
+				tr.appendTo(table);
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text("输入样式:");
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text(taskTypeInfo[i].inputMeta);
+				tr = $("<tr></tr>");
+				tr.appendTo(table);
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text("输出样式:");
+				td = $("<td></td>");
+				td.appendTo(tr);
+				td.text(taskTypeInfo[i].outputMeta);
+			}
+			$("#dtfragment-2-task-type-des-" + taskTypeInfo[0].id).css({
+				"display": "table-row"
+			});
 			
 			/*****selector table: third row*****/
 			tr = $("<tr></tr>");
 			tr.appendTo(selector);
 			td = $("<td></td>");
 			td.appendTo(tr);
-			td.html("参数:");
+			td.html("选择数据集");
+			td = $("<td></td>");
+			td.appendTo(tr);
+			td.html("<input type = 'button' value = '打开数据集列表' onclick = 'Common.openWindow()'/>");
+			
+			/*****selector table: fourth row*****/
+			tr = $("<tr></tr>");
+			tr.appendTo(selector);
+			td = $("<td></td>");
+			td.appendTo(tr);
+			td.html("参数");
 			td = $("<td></td>");
 			td.appendTo(tr);
 			var width = cntr.width() - selector.find("tr").eq(0).find("td").eq(0).width() - 46;
@@ -346,6 +407,16 @@ Task.create = function(){
 			alert("Oops, we got an error...");
 		});
 	Task.loadDslist();
+};
+
+Task.showTypeInfo = function(tstype_id){
+//	console.log(tstype_id);
+	var radio = $("input[name='dtfragment-2-task-type']");
+	for(var i = 0; i < radio.length; i++){
+		var id = radio.eq(i).attr("value");
+		$("#dtfragment-2-task-type-des-" + id).css("display","none");
+	}
+	$("#dtfragment-2-task-type-des-" + tstype_id).css("display","table-row");
 };
 
 /*****load dataset list as checkbox*****/
@@ -370,12 +441,12 @@ Task.loadDslist = function(){
 
 Task.run = function(){
 	/*****get task type*****/
-	var type = $("input[name='dtfragment-2-task-type']:checked").val();
-	if(type === undefined){
+	var typeId = $("input[name='dtfragment-2-task-type']:checked").val();
+	if(typeId === undefined){
 		alert("选择一类任务!");
 		return;
 	}
-//	console.log(type);
+//	console.log(typeId);
 	
 	/*****get selected datasets*****/
 	var datasets = $.parseJSON("[]");
@@ -395,8 +466,7 @@ Task.run = function(){
 //		console.log(this.id);
 		datasets[index] = $("#" + this.id).children("a").children("span").attr("id");
 	});
-	console.log(datasets);
-	return;
+//	console.log(datasets);
 	
 	/*****get parameter text*****/
 	var tr = $("#dtfragment-2").children("table").children("tbody").children("tr").eq(2);
@@ -404,7 +474,7 @@ Task.run = function(){
 //	console.log(param);
 	
 	/*****run task*****/
-	$.getJSON(URL.runTask() + "?jsoncallback=?" + "&type=" + type + "&datasets=" + JSON.stringify(datasets) + "&param=" + param)
+	$.getJSON(URL.runTask() + "?jsoncallback=?" + "&typeId=" + typeId + "&datasets=" + JSON.stringify(datasets) + "&param=" + param)
 		.done(function(data){
 //			console.log(data);
 			/*****alert info*****/
@@ -471,7 +541,7 @@ Task.refreshStatus = function(index){
 				}
 			}
 		}).fail(function(){
-			/*****refresh browser error*****/
+			/*****warning: error may occur when refresh browser*****/
 //			alert("Oops, we got an error...");
 			console.log("Oops, we got an error...");
 		});
